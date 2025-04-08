@@ -1,0 +1,13 @@
+package com.krishna.speedyfoodieapi;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class SpeedyFoodieApplicationTests {
+
+	@Test
+	void contextLoads() {
+	}
+
+}
