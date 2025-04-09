@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
+
 
 @RestController
 @RequestMapping("/api/v1/foods")
@@ -21,7 +23,7 @@ public class FoodController {
     private final FoodService foodService;
 
     @PostMapping
-    public FoodResponse addFood(@RequestPart("food") String foodRequestString,
+    public ResponseEntity<FoodResponse> addFood(@RequestPart("food") String foodRequestString,
                                 @RequestPart("file") MultipartFile file){
         ObjectMapper objectMapper = new ObjectMapper();
         FoodRequest request = null;
@@ -35,11 +37,30 @@ public class FoodController {
         if (foodResponse == null) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to add food");
         }
-        return foodResponse;
+        return ResponseEntity.created(null).body(foodResponse);
     }
 
     @GetMapping
-    public ResponseEntity<String> healthCheck() {
-        return ResponseEntity.ok("Food service is up and running");
+    public ResponseEntity<List<FoodResponse>> readFoods() {
+        List<FoodResponse> foodResponseList = foodService.getAllFoods();
+        if (foodResponseList == null || foodResponseList.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No foods found");
+        }
+        return ResponseEntity.ok(foodResponseList);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<FoodResponse> getFoodById(@PathVariable String id) {
+        FoodResponse foodResponse = foodService.getFoodById(id);
+        if (foodResponse == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Food not found");
+        }
+        return ResponseEntity.ok(foodResponse);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteFood(@PathVariable String id) {
+        foodService.deleteFoodById(id);
+        return ResponseEntity.noContent().build();
     }
 }
