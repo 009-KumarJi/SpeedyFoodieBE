@@ -18,6 +18,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/foods")
 @AllArgsConstructor
+@CrossOrigin("*")
 public class FoodController {
 
     private final FoodService foodService;
@@ -25,6 +26,7 @@ public class FoodController {
     @PostMapping
     public ResponseEntity<FoodResponse> addFood(@RequestPart("food") String foodRequestString,
                                 @RequestPart("file") MultipartFile file){
+        System.out.println("Received request to add food: " + foodRequestString);
         ObjectMapper objectMapper = new ObjectMapper();
         FoodRequest request = null;
         try {
@@ -62,5 +64,14 @@ public class FoodController {
     public ResponseEntity<Void> deleteFood(@PathVariable String id) {
         foodService.deleteFoodById(id);
         return ResponseEntity.noContent().build();
+    }
+    
+    @GetMapping("/custom-categories")
+    public ResponseEntity<List<String>> findAllCustomCategories() {
+        List<String> customCategories = foodService.findAllCustomCategories();
+        if (customCategories.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(customCategories);
     }
 }

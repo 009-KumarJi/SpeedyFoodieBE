@@ -1,6 +1,7 @@
 package com.krishna.speedyfoodieapi.service;
 
 import com.krishna.speedyfoodieapi.entity.FoodEntity;
+import com.krishna.speedyfoodieapi.enums.FoodCategory;
 import com.krishna.speedyfoodieapi.io.FoodResponse;
 import com.krishna.speedyfoodieapi.repository.FoodRepository;
 import com.krishna.speedyfoodieapi.request.FoodRequest;
@@ -112,13 +113,25 @@ public class FoodServiceImpl implements FoodService {
         FoodEntity foodEntity = foodRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Food not found"));
         String publicId = cloudinaryFolder + "/" + foodEntity.getImageUrl().substring(foodEntity.getImageUrl().lastIndexOf('/') + 1, foodEntity.getImageUrl().lastIndexOf('.'));
-        boolean deleted = deleteFile(publicId);
+        boolean isFileDeleted = deleteFile(publicId);
 
-        if (!deleted) {
+        if (!isFileDeleted) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete image from Cloudinary");
         }
 
         foodRepository.delete(foodEntity);
+    }
+
+    @Override
+    public List<String> findAllCustomCategories() {
+        List<FoodEntity> foodsWithCustomCategories = foodRepository.findByCategory(FoodCategory.OTHER);
+        
+        return foodsWithCustomCategories.stream()
+                .map(FoodEntity::getCustomCategory)
+                .distinct()
+                .filter(Objects::nonNull)
+                .sorted()
+                .toList();
     }
 
     private FoodResponse convertToResponse(FoodEntity foodEntity) {
@@ -128,7 +141,11 @@ public class FoodServiceImpl implements FoodService {
                 .description(foodEntity.getDescription())
                 .price(foodEntity.getPrice())
                 .category(foodEntity.getCategory())
+                .customCategory(foodEntity.getCustomCategory())
+                .foodType(foodEntity.getFoodType())
                 .imageUrl(foodEntity.getImageUrl())
+                .createdAt(foodEntity.getCreatedAt())
+                .updatedAt(foodEntity.getUpdatedAt())
                 .build();
     }
 
@@ -138,6 +155,9 @@ public class FoodServiceImpl implements FoodService {
                 .description(foodRequest.getDescription())
                 .price(foodRequest.getPrice())
                 .category(foodRequest.getCategory())
+                .customCategory(foodRequest.getCategory() == com.krishna.speedyfoodieapi.enums.FoodCategory.OTHER ? 
+                        foodRequest.getCustomCategory() : null)
+                .foodType(foodRequest.getFoodType())
                 .build();
     }
 }
